@@ -522,6 +522,7 @@ public class MTMathAtomFactory {
         "mathbb": .blackboard,
         "mathbfit": .boldItalic,
         "bm": .boldItalic,
+        "boldsymbol": .boldItalic,
         "text": .roman,
     ]
     

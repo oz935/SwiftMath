@@ -52,6 +52,29 @@ public class MTDisplay:NSObject {
         }
     }
     
+    /// Sets `context`'s fill colour to this display's colour. Upstream used
+    /// `textColor?.setFill()`, which reaches only the platform's *current*
+    /// graphics context, so drawing into any other CGContext (a bitmap the
+    /// host owns) silently used whatever fill colour that context had.
+    func applyFillColor(_ context: CGContext) {
+        if let color = self.textColor?.cgColor { context.setFillColor(color) }
+    }
+
+    /// Strokes a straight line into `context` itself, in this display's
+    /// colour. Upstream stroked a UIBezierPath/NSBezierPath, which draws into
+    /// the *current* context, so fraction bars, radical overbars and
+    /// over/underlines vanished from any other CGContext.
+    func strokeLine(_ context: CGContext, from start: CGPoint, to end: CGPoint, width: CGFloat, roundCap: Bool = false) {
+        context.saveGState()
+        if let color = self.textColor?.cgColor { context.setStrokeColor(color) }
+        context.setLineWidth(width)
+        context.setLineCap(roundCap ? .round : .butt)
+        context.move(to: start)
+        context.addLine(to: end)
+        context.strokePath()
+        context.restoreGState()
+    }
+
     /// Gets the bounding rectangle for the MTDisplay
     func displayBounds() -> CGRect {
         CGRectMake(self.position.x, self.position.y - self.descent, self.width, self.ascent + self.descent)
@@ -364,16 +387,13 @@ public class MTFractionDisplay : MTDisplay {
 
         context.saveGState()
         
-        self.textColor?.setStroke()
-        
         // draw the horizontal line
         // Note: line thickness of 0 draws the thinnest possible line - we want no line so check for 0s
         if self.lineThickness > 0 {
-            let path = MTBezierPath()
-            path.move(to: CGPointMake(self.position.x, self.position.y + self.linePosition))
-            path.addLine(to: CGPointMake(self.position.x + self.width, self.position.y + self.linePosition))
-            path.lineWidth = self.lineThickness
-            path.stroke()
+            self.strokeLine(context,
+                            from: CGPointMake(self.position.x, self.position.y + self.linePosition),
+                            to: CGPointMake(self.position.x + self.width, self.position.y + self.linePosition),
+                            width: self.lineThickness)
         }
         
         context.restoreGState()
@@ -471,8 +491,7 @@ class MTRadicalDisplay : MTDisplay {
         self.degree?.draw(context)
 
         context.saveGState();
-        self.textColor?.setStroke()
-        self.textColor?.setFill()
+        self.applyFillColor(context)
 
         // Make the current position the origin as all the positions of the sub atoms are relative to the origin.
         context.translateBy(x: self.position.x + _radicalShift, y: self.position.y);
@@ -486,14 +505,9 @@ class MTRadicalDisplay : MTDisplay {
         let heightFromTop = topKern;
 
         // draw the horizontal line with the given thickness
-        let path = MTBezierPath()
         let lineStart = CGPointMake(_radicalGlyph!.width, self.ascent - heightFromTop - self.lineThickness / 2); // subtract half the line thickness to center the line
         let lineEnd = CGPointMake(lineStart.x + self.radicand!.width, lineStart.y);
-        path.move(to: lineStart)
-        path.addLine(to: lineEnd)
-        path.lineWidth = lineThickness
-        path.lineCapStyle = .round
-        path.stroke()
+        self.strokeLine(context, from: lineStart, to: lineEnd, width: lineThickness, roundCap: true)
 
         context.restoreGState();
     }
@@ -520,7 +534,7 @@ class MTGlyphDisplay : MTDisplayDS {
         super.draw(context)
         context.saveGState()
 
-        self.textColor?.setFill()
+        self.applyFillColor(context)
         
         // Make the current position the origin as all the positions of the sub atoms are relative to the origin.
         
@@ -570,7 +584,7 @@ class MTGlyphConstructionDisplay:MTDisplayDS {
         super.draw(context)
         context.saveGState()
         
-        self.textColor?.setFill()
+        self.applyFillColor(context)
         
         // Make the current position the origin as all the positions of the sub atoms are relative to the origin.
         context.translateBy(x: self.position.x, y: self.position.y - self.shiftDown)
@@ -752,16 +766,10 @@ class MTLineDisplay : MTDisplay {
         
         context.saveGState();
         
-        self.textColor?.setStroke()
-        
         // draw the horizontal line
-        let path = MTBezierPath()
         let lineStart = CGPointMake(self.position.x, self.position.y + self.lineShiftUp);
         let lineEnd = CGPointMake(lineStart.x + self.inner!.width, lineStart.y);
-        path.move(to:lineStart)
-        path.addLine(to: lineEnd)
-        path.lineWidth = self.lineThickness;
-        path.stroke()
+        self.strokeLine(context, from: lineStart, to: lineEnd, width: self.lineThickness)
         
         context.restoreGState();
     }
@@ -829,3 +837,4 @@ class MTAccentDisplay : MTDisplay {
     }
     
 }
+

@@ -89,13 +89,13 @@ public class MTDisplay:NSObject {
     /// The width of the display
     public var width:CGFloat = 0
     /// Position of the display with respect to the parent view or display.
-    var position = CGPoint.zero
+    public var position = CGPoint.zero
     /// The range of characters supported by this item
     public var range:NSRange=NSMakeRange(0, 0)
     /// Whether the display has a subscript/superscript following it.
     public var hasScript:Bool = false
     /// The text color for this display
-    var textColor: MTColor?
+    public var textColor: MTColor?
     /// The local color, if the color was mutated local with the color command
     var localTextColor: MTColor?
     /// The background color for this display
@@ -149,7 +149,7 @@ public class MTCTLineDisplay : MTDisplay {
         }
     }
     
-    override var textColor: MTColor? {
+    public override var textColor: MTColor? {
         set {
             super.textColor = newValue
             let attrStr = attributedString!.mutableCopy() as! NSMutableAttributedString
@@ -230,7 +230,7 @@ public class MTMathListDisplay : MTDisplay {
         self.recomputeDimensions()
     }
   
-    override var textColor: MTColor? {
+    public override var textColor: MTColor? {
         set {
             super.textColor = newValue
             for displayAtom in self.subDisplays {
@@ -339,7 +339,7 @@ public class MTFractionDisplay : MTDisplay {
         numerator!.position = CGPointMake(self.position.x + (self.width - numerator!.width)/2, self.position.y + self.numeratorUp)
     }
 
-    override var position: CGPoint {
+    public override var position: CGPoint {
         set {
             super.position = newValue
             self.updateDenominatorPosition()
@@ -348,7 +348,7 @@ public class MTFractionDisplay : MTDisplay {
         get { super.position }
     }
     
-    override var textColor: MTColor? {
+    public override var textColor: MTColor? {
         set {
             super.textColor = newValue
             numerator?.textColor = newValue

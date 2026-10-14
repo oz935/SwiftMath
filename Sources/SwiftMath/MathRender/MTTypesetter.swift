@@ -345,7 +345,10 @@ func getBboxDetails(_ bbox:CGRect, ascent:inout CGFloat, descent:inout CGFloat) 
 
 // MARK: - MTTypesetter
 
-class MTTypesetter {
+/// Turns a parsed `MTMathList` into an `MTMathListDisplay` that draws into any
+/// `CGContext`. Public so a host can typeset without a `MTMathUILabel` (and so
+/// without UIKit or AppKit views), for example in a host-tested model layer.
+public class MTTypesetter {
     var font:MTFont!
     var displayAtoms = [MTDisplay]()
     var currentPosition = CGPoint.zero
@@ -363,7 +366,10 @@ class MTTypesetter {
     var cramped = false
     var spaced = false
     
-    static func createLineForMathList(_ mathList:MTMathList?, font:MTFont?, style:MTLineStyle) -> MTMathListDisplay? {
+    /// Typesets `mathList` with `font` in `style` and returns the display tree,
+    /// positioned at the origin with its baseline on y = 0 (y grows upwards).
+    /// Set `position` and `textColor` on the result before calling `draw(_:)`.
+    public static func createLineForMathList(_ mathList:MTMathList?, font:MTFont?, style:MTLineStyle) -> MTMathListDisplay? {
         let finalizedList = mathList?.finalized
         // default is not cramped
         return self.createLineForMathList(finalizedList, font:font, style:style, cramped:false)

@@ -29,5 +29,10 @@ let package = Package(
         .testTarget(
             name: "SwiftMathTests",
             dependencies: ["SwiftMath"]),
+        // Imports SwiftMath without @testable, so it compiles only against the
+        // public surface a host uses to typeset without a label view.
+        .testTarget(
+            name: "SwiftMathPublicAPITests",
+            dependencies: ["SwiftMath"]),
     ]
 )

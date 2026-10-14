@@ -16,50 +16,20 @@ public enum MathFont: String, CaseIterable, Identifiable {
     
     public var id: Self { self }  // Makes things simpler for SwiftUI
 
+    // This fork bundles Latin Modern Math only (GUST Font License): the other
+    // eleven upstream fonts added about 6 MB to every host app. A host that
+    // needs another font restores its .otf, .plist, licence and case together.
     case latinModernFont = "latinmodern-math"
-    case kpMathLightFont = "KpMath-Light"
-    case kpMathSansFont  = "KpMath-Sans"
-    case xitsFont        = "xits-math"
-    case termesFont      = "texgyretermes-math"
-    case asanaFont       = "Asana-Math"
-    case eulerFont       = "Euler-Math"
-    case firaFont        = "FiraMath-Regular"
-    case notoSansFont    = "NotoSansMath-Regular"
-    case libertinusFont  = "LibertinusMath-Regular"
-    case garamondFont    = "Garamond-Math"
-    case leteSansFont    = "LeteSansMath"
     
     var fontFamilyName: String {
         switch self {
             case .latinModernFont:  "Latin Modern Math"
-            case .kpMathLightFont:  "KpMath"
-            case .kpMathSansFont:   "KpMath"
-            case .xitsFont:         "XITS Math"
-            case .termesFont:       "TeX Gyre Termes Math"
-            case .asanaFont:        "Asana Math"
-            case .eulerFont:        "Euler Math"
-            case .firaFont:         "Fira Math"
-            case .notoSansFont:     "Noto Sans Math"
-            case .libertinusFont:   "Libertinus Math"
-            case .garamondFont:     "Garamond-Math"  // PostScript name is "Garamond-Math", not "Garamond Math"
-            case .leteSansFont:     "Lete Sans Math"
         }
     }
 
     var postScriptName: String {
         switch self {
             case .latinModernFont:  "LatinModernMath-Regular"
-            case .kpMathLightFont:  "KpMath-Light"
-            case .kpMathSansFont:   "KpMath-Sans"
-            case .xitsFont:         "XITSMath"
-            case .termesFont:       "TeXGyreTermesMath-Regular"
-            case .asanaFont:        "Asana-Math"
-            case .eulerFont:        "Euler-Math"
-            case .firaFont:         "FiraMath-Regular"
-            case .notoSansFont:     "NotoSansMath-Regular"
-            case .libertinusFont:   "LibertinusMath-Regular"
-            case .garamondFont:     "Garamond-Math"
-            case .leteSansFont:     "LeteSansMath"
         }
     }
 

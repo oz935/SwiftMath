@@ -26,7 +26,10 @@ public class MTFontManager {
     @RWLocked
     var nameToFontMap = [String: MTFont]()
 
+    /// Returns nil for a name with no font in the bundle (this fork ships
+    /// Latin Modern Math only), instead of trapping inside MTFont's loader.
     public func font(withName name:String, size:CGFloat) -> MTFont? {
+        guard MTFont.fontBundle.path(forResource: name, ofType: "otf") != nil else { return nil }
         var f = self.nameToFontMap[name]
         if f == nil {
             f = MTFont(fontWithName: name, size: size)
@@ -39,50 +42,6 @@ public class MTFontManager {
     
     public func latinModernFont(withSize size:CGFloat) -> MTFont? {
         MTFontManager.fontManager.font(withName: "latinmodern-math", size: size)
-    }
-    
-    public func kpMathLightFont(withSize size:CGFloat) -> MTFont? {
-        MTFontManager.fontManager.font(withName: "KpMath-Light", size: size)
-    }
-    
-    public func kpMathSansFont(withSize size:CGFloat) -> MTFont? {
-        MTFontManager.fontManager.font(withName: "KpMath-Sans", size: size)
-    }
-    
-    public func xitsFont(withSize size:CGFloat) -> MTFont? {
-        MTFontManager.fontManager.font(withName: "xits-math", size: size)
-    }
-    
-    public func termesFont(withSize size:CGFloat) -> MTFont? {
-        MTFontManager.fontManager.font(withName: "texgyretermes-math", size: size)
-    }
-    
-    public func asanaFont(withSize size:CGFloat) -> MTFont? {
-        MTFontManager.fontManager.font(withName: "Asana-Math", size: size)
-    }
-    
-    public func eulerFont(withSize size:CGFloat) -> MTFont? {
-        MTFontManager.fontManager.font(withName: "Euler-Math", size: size)
-    }
-    
-    public func firaRegularFont(withSize size:CGFloat) -> MTFont? {
-        MTFontManager.fontManager.font(withName: "FiraMath-Regular", size: size)
-    }
-    
-    public func notoSansRegularFont(withSize size:CGFloat) -> MTFont? {
-        MTFontManager.fontManager.font(withName: "NotoSansMath-Regular", size: size)
-    }
-    
-    public func libertinusRegularFont(withSize size:CGFloat) -> MTFont? {
-        MTFontManager.fontManager.font(withName: "LibertinusMath-Regular", size: size)
-    }
-    
-    public func garamondMathFont(withSize size:CGFloat) -> MTFont? {
-        MTFontManager.fontManager.font(withName: "Garamond-Math", size: size)
-    }
-    
-    public func leteSansFont(withSize size:CGFloat) -> MTFont? {
-        MTFontManager.fontManager.font(withName: "LeteSansMath", size: size)
     }
     
     public var defaultFont: MTFont? {

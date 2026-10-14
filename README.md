@@ -1,5 +1,21 @@
 # SwiftMath
 
+> **This is `oz935/SwiftMath`, a fork of
+> [mgriebling/SwiftMath](https://github.com/mgriebling/SwiftMath) at tag
+> `1.7.3`, maintained for the Nice app.** Releases are tagged
+> `1.7.3-nice.N` (SemVer prereleases, so SwiftPM can pin them `exact:`).
+> What differs from upstream `1.7.3`:
+>
+> - Cherry-picked from upstream `main` (author and `-x` trailer kept):
+>   `\iint` / `\iiint` / `\implies` / `\nexists`, `\boldsymbol`, `\mod` /
+>   `\pmod`, and the macOS fix for `MathFontTests`.
+> - `MTTypesetter.createLineForMathList(_:font:style:)`, `MTDisplay.position`
+>   and `MTDisplay.textColor` are public, so a host can typeset and draw into
+>   its own `CGContext` without `MTMathUILabel`.
+> - The font bundle holds Latin Modern Math only (plus its GUST licence);
+>   the other eleven fonts and their `MathFont` cases are removed, and
+>   `MTFontManager.font(withName:size:)` returns nil for a missing font.
+
 `SwiftMath` provides a full Swift implementation of [iosMath](https://travis-ci.org/kostub/iosMath) 
 for displaying beautifully rendered math equations in iOS and MacOS applications. It typesets formulae written 
 using LaTeX in a `UILabel` equivalent class. It uses the same typesetting rules as LaTeX and
@@ -234,21 +250,16 @@ label.fontSize = 25
 The default font is *Latin Modern Math*. This can be changed as:
 
 ```swift
-label.font = MTFontManager.fontmanager.termesFont(withSize:20)
+label.font = MTFontManager.fontmanager.latinModernFont(withSize:20)
 ```
 
-This project has 12 fonts bundled with it, but you can use any OTF math
-font. A python script is included that generates the `.plist` files 
+Upstream bundles 12 fonts; this fork bundles Latin Modern Math only (see
+the fork note at the top). You can use any OTF math font. A python script is included that generates the `.plist` files 
 required for an `.otf` font to work with `SwiftMath`.  If you generate
 (and test) any other fonts please contribute them back to this project for
 others to benefit.
 
 
-
-Note: The `KpMath-Light`, `KpMath-Sans`, `Asana` fonts currently incorrectly
-render very large radicals. It appears that the font files do
-not properly define the offsets required to typeset these glyphs.  If
-anyone can fix this, it would be greatly appreciated.
 
 ##### Text Color
 The default color of the rendered equation is black. You can change
@@ -310,13 +321,6 @@ updates. This includes:
 file for more info.
 
 ### Fonts
-This distribution contains the following fonts. These fonts are
-licensed as follows:
-* Latin Modern Math: 
-    [GUST Font License](GUST-FONT-LICENSE.txt)
-* Tex Gyre Termes:
-    [GUST Font License](GUST-FONT-LICENSE.txt)
-* [XITS Math](https://github.com/khaledhosny/xits-math):
-    [Open Font License](OFL.txt)
-* [KpMath Light/KpMath Sans](http://scripts.sil.org/OFL):
-    [SIL Open Font License](OFL.txt)
+This distribution contains one font, licensed as follows:
+* Latin Modern Math:
+    [GUST Font License](Sources/SwiftMath/mathFonts.bundle/GUST-FONT-LICENSE.txt)

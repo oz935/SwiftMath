@@ -1283,6 +1283,9 @@ public class MTTypesetter {
     // MARK: - Large Operators
     
     func makeLargeOp(_ op:MTLargeOperator!) -> MTDisplay?  {
+        if let brace = op as? MTUnderBrace {
+            return self.addLimitsToDisplay(self.makeUnderBrace(brace), forOperator: brace, delta: 0)
+        }
         let limits = op.limits && style == .display
         var delta = CGFloat(0)
         if op.nucleus.count == 1 {
@@ -1328,7 +1331,8 @@ public class MTTypesetter {
             currentPosition.x += display!.width
             return display;
         }
-        if op.limits && style == .display {
+        // An under brace takes its limits below in every style (TeX's \\limits).
+        if op.limits && (style == .display || op is MTUnderBrace) {
             // make limits
             var superScript:MTMathListDisplay? = nil, subScript:MTMathListDisplay? = nil
             if op.superScript != nil {
@@ -1358,6 +1362,92 @@ public class MTTypesetter {
         }
     }
     
+    // MARK: - Under brace
+
+    /// plain.tex's \\underbrace kerns 3pt between the content and the brace and
+    /// 3pt below the brace, at a 10pt font: 0.3 of the font size.
+    static let kUnderBraceGapMultiplier = CGFloat(0.3)
+
+    func makeUnderBrace(_ brace: MTUnderBrace) -> MTDisplay? {
+        // createLineForMathList force-unwraps its list, so an absent argument
+        // typesets as an empty list.
+        guard let inner = MTTypesetter.createLineForMathList(brace.innerList ?? MTMathList(), font:font, style:style, cramped:cramped) else {
+            return nil
+        }
+        let gap = styleFont.fontSize * Self.kUnderBraceGapMultiplier
+        let glyphs = self.underBraceGlyphs(forWidth: inner.width)
+        let braceDisplay: MTDisplay = glyphs.count == 1
+            ? MTGlyphDisplay(withGlpyh: glyphs[0].glyph, range: brace.indexRange, font: styleFont)
+            : MTGlyphConstructionDisplay(withGlyphs: glyphs.map { $0.glyph }, positions: glyphs.map { CGPoint(x: $0.x, y: 0) }, font: styleFont)
+
+        // The ink box of the whole brace, in the brace's own coordinates.
+        var ink = CGRect.null
+        for part in glyphs {
+            var glyph = part.glyph
+            let bbox = CTFontGetBoundingRectsForGlyphs(styleFont.ctFont, .horizontal, &glyph, nil, 1)
+            ink = ink.union(bbox.offsetBy(dx: part.x, dy: 0))
+        }
+        let braceWidth = glyphs.map { $0.x + $0.advance }.max() ?? 0
+        let width = max(inner.width, braceWidth)
+
+        // The top of the brace's ink sits `gap` below the content's descent.
+        let braceBaseline = -(inner.descent + gap) - ink.maxY
+        let display = MTUnderBraceDisplay(
+            inner: inner, brace: braceDisplay,
+            innerOffsetX: (width - inner.width) / 2,
+            braceOffset: CGPoint(x: (width - braceWidth) / 2, y: braceBaseline),
+            range: brace.indexRange)
+        display.width = width
+        display.ascent = inner.ascent
+        display.descent = -(braceBaseline + ink.minY) + gap
+        display.position = currentPosition
+        return display
+    }
+
+    /// The glyphs of a downward brace (U+23DF) at least `width` wide: the
+    /// smallest of the font's horizontal variants that is wide enough, else
+    /// an assembly of the font's `.lft`, `.ex`, `.md` and `.rt` parts (the
+    /// plist carries no horizontal assemblies), else the largest variant.
+    func underBraceGlyphs(forWidth width: CGFloat) -> [(glyph: CGGlyph, x: CGFloat, advance: CGFloat)] {
+        let braceChar = "\u{23DF}"
+        let base = self.findGlyphForCharacterAtIndex(braceChar.startIndex, inString: braceChar)
+        var variants = styleFont.mathTable!.getHorizontalVariantsForGlyph(base).compactMap { $0?.uint16Value }
+        if variants.isEmpty { variants = [base] }
+        var advances = [CGSize](repeating: .zero, count: variants.count)
+        CTFontGetAdvancesForGlyphs(styleFont.ctFont, .horizontal, &variants, &advances, variants.count)
+        if let i = advances.firstIndex(where: { $0.width >= width }) {
+            return [(variants[i], 0, advances[i].width)]
+        }
+        let largest = [(glyph: variants.last!, x: CGFloat(0), advance: advances.last!.width)]
+
+        let name = styleFont.get(nameForGlyph: base)
+        var parts = ["lft", "ex", "md", "rt"].map { styleFont.get(glyphWithName: "\(name).\($0)") }
+        guard !name.isEmpty, !parts.contains(0) else { return largest }
+        var partAdvances = [CGSize](repeating: .zero, count: parts.count)
+        CTFontGetAdvancesForGlyphs(styleFont.ctFont, .horizontal, &parts, &partAdvances, parts.count)
+        let (left, ex, middle, right) = (partAdvances[0].width, partAdvances[1].width, partAdvances[2].width, partAdvances[3].width)
+        guard ex > 0 else { return largest }
+
+        // Fill each side of the middle cusp with `.ex` bars. Copies overlap
+        // (they are flat bars on the same line as the ends' connectors), so
+        // each side is covered exactly.
+        let side = max(0, (width - left - middle - right) / 2)
+        let count = max(1, Int((side / ex).rounded(.up)))
+        func fill(from start: CGFloat) -> [(glyph: CGGlyph, x: CGFloat, advance: CGFloat)] {
+            if count == 1 {
+                return [(parts[1], start + (side - ex) / 2, ex)]
+            }
+            let step = (side - ex) / CGFloat(count - 1)
+            return (0..<count).map { (parts[1], start + CGFloat($0) * step, ex) }
+        }
+        var result = [(glyph: parts[0], x: CGFloat(0), advance: left)]
+        result += fill(from: left)
+        result.append((parts[2], left + side, middle))
+        result += fill(from: left + side + middle)
+        result.append((parts[3], left + side + middle + side, right))
+        return result
+    }
+
     // MARK: - Large delimiters
     
     // Delimiter shortfall from plain.tex

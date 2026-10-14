@@ -15,6 +15,11 @@
 > - The font bundle holds Latin Modern Math only (plus its GUST licence);
 >   the other eleven fonts and their `MathFont` cases are removed, and
 >   `MTFontManager.font(withName:size:)` returns nil for a missing font.
+> - Displays draw their colour and rules into the `CGContext` passed to
+>   `draw(_:)`, not the platform's current context (upstream lost large
+>   operators, delimiters and fraction/radical rules in any other context).
+> - `\underbrace{...}_{...}`: a brace under the content, the label under the
+>   brace in every style; wide content uses the font's brace parts.
 
 `SwiftMath` provides a full Swift implementation of [iosMath](https://travis-ci.org/kostub/iosMath) 
 for displaying beautifully rendered math equations in iOS and MacOS applications. It typesets formulae written 

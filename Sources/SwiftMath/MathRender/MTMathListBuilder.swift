@@ -444,6 +444,13 @@ public struct MTMathListBuilder {
                     if let accent = atom as? MTAccent {
                         str += "\\\(MTMathAtomFactory.accentName(accent)!){\(mathListToString(accent.innerList!))}"
                     }
+                } else if let brace = atom as? MTUnderBrace {
+                    // Before the generic operator branch: an under brace has
+                    // no symbol name for latexSymbolName(for:) to find.
+                    str += "\\underbrace{\(mathListToString(brace.innerList))}"
+                    if !brace.limits {
+                        str += "\\nolimits "
+                    }
                 } else if atom.type == .largeOperator {
                     let op = atom as! MTLargeOperator
                     let command = MTMathAtomFactory.latexSymbolName(for: atom)
@@ -583,6 +590,11 @@ public struct MTMathListBuilder {
             let under = MTUnderLine()
             under.innerList = self.buildInternal(true)
             return under
+        } else if command == "underbrace" {
+            // One argument; a following _{...} is the label under the brace.
+            let brace = MTUnderBrace()
+            brace.innerList = self.buildInternal(true)
+            return brace
         } else if command == "begin" {
             let env = self.readEnvironment()
             if env == nil {

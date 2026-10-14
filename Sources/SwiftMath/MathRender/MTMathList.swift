@@ -218,6 +218,9 @@ public class MTMathAtom: NSObject {
     public func copy() -> MTMathAtom {
         switch self.type {
             case .largeOperator:
+                if let brace = self as? MTUnderBrace {
+                    return MTUnderBrace(brace)
+                }
                 return MTLargeOperator(self as? MTLargeOperator)
             case .fraction:
                 return MTFraction(self as? MTFraction)
@@ -442,6 +445,42 @@ public class MTLargeOperator: MTMathAtom {
     init(value: String, limits: Bool) {
         super.init(type: .largeOperator, value: value)
         self.limits = limits
+    }
+}
+
+// MARK: - MTUnderBrace
+/** `\underbrace{...}`: the inner list with a horizontal brace under it.
+ As in TeX it is an operator with limits, so `\underbrace{x}_{n}` sets `n`
+ under the brace in every style, not only in display style (TeX's
+ `\mathop{...}\limits`). Its nucleus is empty; the content is `innerList`. */
+public class MTUnderBrace: MTLargeOperator {
+    /// The list drawn above the brace.
+    public var innerList: MTMathList?
+
+    init(_ brace: MTUnderBrace?) {
+        super.init(brace)
+        self.innerList = MTMathList(brace?.innerList)
+    }
+
+    init() {
+        super.init(value: "", limits: true)
+    }
+
+    override public var description: String {
+        var string = "\\underbrace{\(self.innerList?.description ?? "")}"
+        if self.superScript != nil {
+            string += "^{\(self.superScript!.description)}"
+        }
+        if self.subScript != nil {
+            string += "_{\(self.subScript!.description)}"
+        }
+        return string
+    }
+
+    override public var finalized: MTMathAtom {
+        let newBrace = super.finalized as! MTUnderBrace
+        newBrace.innerList = newBrace.innerList?.finalized
+        return newBrace
     }
 }
 

@@ -566,6 +566,18 @@ class MTGlyphConstructionDisplay:MTDisplayDS {
     var font:MTFont?
     var numGlyphs:Int=0
     
+    /// A run of glyphs at arbitrary positions relative to this display's
+    /// origin (a horizontal assembly such as a wide under brace).
+    init(withGlyphs glyphs:[CGGlyph], positions:[CGPoint], font:MTFont?) {
+        super.init()
+        assert(glyphs.count == positions.count, "Glyphs and positions need to match")
+        self.numGlyphs = glyphs.count
+        self.glyphs = glyphs
+        self.positions = positions
+        self.font = font
+        self.position = CGPoint.zero
+    }
+
     init(withGlyphs glyphs:[NSNumber?], offsets:[NSNumber?], font:MTFont?) {
         super.init()
         assert(glyphs.count == offsets.count, "Glyphs and offsets need to match")
@@ -838,3 +850,55 @@ class MTAccentDisplay : MTDisplay {
     
 }
 
+// MARK: - MTUnderBraceDisplay
+
+/// `\\underbrace{...}`: the content with a horizontal brace below it. The
+/// display's baseline is the content's baseline (TeX's `\\vtop`); both
+/// children are placed relative to `position`.
+class MTUnderBraceDisplay : MTDisplay {
+
+    var inner: MTMathListDisplay
+    var brace: MTDisplay
+    /// Horizontal offset of the content inside this display.
+    var innerOffsetX: CGFloat
+    /// Offset of the brace's origin; y is negative (below the baseline).
+    var braceOffset: CGPoint
+
+    init(inner: MTMathListDisplay, brace: MTDisplay, innerOffsetX: CGFloat, braceOffset: CGPoint, range: NSRange) {
+        self.inner = inner
+        self.brace = brace
+        self.innerOffsetX = innerOffsetX
+        self.braceOffset = braceOffset
+        super.init()
+        self.range = range
+        self.updateChildPositions()
+    }
+
+    override var textColor: MTColor? {
+        set {
+            super.textColor = newValue
+            inner.textColor = newValue
+            brace.textColor = newValue
+        }
+        get { super.textColor }
+    }
+
+    override var position: CGPoint {
+        set {
+            super.position = newValue
+            self.updateChildPositions()
+        }
+        get { super.position }
+    }
+
+    func updateChildPositions() {
+        inner.position = CGPoint(x: position.x + innerOffsetX, y: position.y)
+        brace.position = CGPoint(x: position.x + braceOffset.x, y: position.y + braceOffset.y)
+    }
+
+    override func draw(_ context: CGContext) {
+        super.draw(context)
+        inner.draw(context)
+        brace.draw(context)
+    }
+}
